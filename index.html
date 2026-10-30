@@ -38,15 +38,16 @@ const $=s=>document.querySelector(s),app=$('#app');
 const C=(n,k)=>{let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
 const F=n=>n<2?1:n*F(n-1);
 const get=()=>{try{return JSON.parse(localStorage.pt)||{}}catch(e){return{}}};
-const put=(l,s)=>{try{const d=get();d[l]=Math.max(d[l]||0,s);localStorage.pt=JSON.stringify(d)}catch(e){}};
+const sync=()=>{try{const n=localStorage.pn;n&&window.FB&&FB.sync(n,get())}catch(e){}};
+const put=(l,s)=>{try{const d=get();if(s>(d[l]||0)){d[l]=s;localStorage.pt=JSON.stringify(d);sync()}}catch(e){}};
 const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const hearts=h=>`<span style="color:var(--red)">${'♥'.repeat(h)}</span><span style="color:var(--slate)">${'♥'.repeat(3-h)}</span>`;
 let raf=0,gen=0;
 const shake=()=>{app.classList.remove('sh');void app.offsetWidth;app.classList.add('sh')};
 function confetti(o){for(let i=0;i<50;i++){const d=document.createElement('div');d.className='cf';d.style.cssText=`left:${Math.random()*100}%;background:${['#dad45e','#d04648','#6dc2ca','#6daa2c','#d27d2c'][i%5]};animation-duration:${1.6+Math.random()*1.6}s;animation-delay:${Math.random()*.6}s`;o.appendChild(d);setTimeout(()=>d.remove(),4500)}}
 function stop(){gen++;cancelAnimationFrame(raf);document.onkeydown=null;const o=$('#ov');o&&o.remove()}
-function over(win,lvl,h){const o=document.createElement('div');o.id='ov';
- o.innerHTML=(win?`<h1>NIVO ZAVRŠEN</h1><div style="font-size:44px;color:var(--ye)">${stars(h)}</div>`:`<h1 style="color:var(--red)">KRAJ IGRE</h1><div>Ostala su ti 0 srca. Pokušaj ponovo!</div>`)+
+function over(win,lvl,h){const tot=[1,2,3,4].reduce((s,l)=>s+(get()[l]||0),0);const o=document.createElement('div');o.id='ov';
+ o.innerHTML=(win?`<h1>NIVO ZAVRŠEN</h1><div style="font-size:44px;color:var(--ye)">${stars(h)}</div><div class="px" style="color:var(--wh)">UKUPNO: ${tot}/12</div>`:`<h1 style="color:var(--red)">KRAJ IGRE</h1><div>Ostala su ti 0 srca. Pokušaj ponovo!</div>`)+
  `<div class=row>${win&&(lvl==1||lvl==3)?`<button onclick="l${lvl+1}()">DALJE</button>`:''}<button class="${win&&(lvl==1||lvl==3)?'alt':''}" onclick="l${lvl}()">${win?'PONOVI':'IGRAJ PONOVO'}</button><button class=alt onclick="menu()">MENI</button></div>`;
  document.body.appendChild(o);win&&confetti(o)}
 function menu(){stop();const d=get();
@@ -157,11 +158,16 @@ function l4(){stop();const my=gen,L=['r^2 = 2r + 3','(r - 3)(r + 1) = 0','A = 3/
  {q:'Koji su koreni jednačine r^2 - 2r - 3 = 0?',o:['r = 1 i r = -3','r = 3 i r = 1','r = 3 i r = -1'],c:2,e:'(r - 3)(r + 1) = 0, pa je a(n) = A·3^n + B·(-1)^n.'},
  {q:'Iz a(1) = 2 i a(2) = 7: 3A - B = 2 i 9A + B = 7. Koliko su A i B?',o:['A = 1, B = 1','A = 3/4, B = 1/4','A = 1/4, B = 3/4'],c:1,e:'Sabiranjem: 12A = 9, pa je A = 3/4, a B = 3A - 2 = 1/4.'},
  {q:'Koliko je a(5) po formuli a(n) = (3^(n+1) + (-1)^n) / 4?',o:['181','183','182'],c:2,e:'a(5) = (729 - 1) / 4 = 182, isto kao preko rekurencije.'}],3,fin,deco)}
+function nick(){stop();let n='';try{n=localStorage.pn||''}catch(e){}
+ if(n){window.FB&&FB.sync(n,get());return menu()}
+ app.innerHTML=`<h1 style="margin-top:40px">username?</h1><div class="box">Ukucaj nadimak (ne pravo ime). Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
+ window.nk=()=>{const v=$('#ni').value.trim().slice(0,20);if(!v)return;try{localStorage.pn=v}catch(e){}window.FB&&FB.sync(v,get());menu()};
+ $('#ni').onkeydown=e=>{if(e.key=='Enter')nk()}}
 function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
  app.innerHTML=`<canvas id="rain" style="position:fixed;inset:0;border:0"></canvas><div style="position:relative;margin:auto;text-align:center"><h1 id="tx" style="font-size:20px;min-height:32px;color:var(--wh)"></h1><div id="hh" style="font:28px 'Press Start 2P',monospace;color:var(--red);min-height:56px;margin-top:14px"></div><div id="tp" class="px" style="color:var(--st);margin-top:34px;visibility:hidden">KLIKNI ZA POČETAK</div><div class="px bl" style="position:fixed;left:0;right:0;bottom:calc(24px + env(safe-area-inset-bottom));text-align:center;color:var(--st);font-size:12px">b3thowen</div></div>`;
  const cv=$('#rain'),g=cv.getContext('2d'),fs=18;let w=cv.width=innerWidth,h=cv.height=innerHeight;
  const y=[...Array(Math.ceil(w/fs))].map(()=>-Math.random()*40|0),rc=()=>AB[Math.random()*AB.length|0];
- const go=()=>{app.onclick=null;menu()};document.onkeydown=go;app.onclick=go;
+ const go=()=>{app.onclick=null;nick()};document.onkeydown=go;app.onclick=go;
  const t0=performance.now();let lt=0;
  (function loop(ts){if(!$('#rain'))return;
   g.fillStyle='rgba(20,12,28,.14)';g.fillRect(0,0,w,h);g.font=fs+'px VT323,monospace';g.fillStyle='#346524';
@@ -171,4 +177,13 @@ function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ
   if(r==T.length){$('#hh').innerHTML='3&lt;3';$('#tp').style.visibility=Math.floor(e/500)%2?'hidden':'visible'}
   raf=requestAnimationFrame(loop)})(performance.now())}
 intro();
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import {getFirestore,doc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyAcZhcVKFcEbdI_EpSve8N2T-gLwpBkiy0",authDomain:"kombo-quest.firebaseapp.com",projectId:"kombo-quest",storageBucket:"kombo-quest.firebasestorage.app",messagingSenderId:"1038737523411",appId:"1:1038737523411:web:91653f0bb911814bbf8a26"});
+const auth=getAuth(app),db=getFirestore(app);let user=null;
+window.FB={async sync(nick,st){try{user=user||(await signInAnonymously(auth)).user;const stars={};let total=0;[1,2,3,4].forEach(l=>{stars[l]=st[l]||0;total+=stars[l]});
+ await setDoc(doc(db,'players',user.uid),{nick:String(nick).slice(0,20),stars,total,last:serverTimestamp()},{merge:true})}catch(e){console.warn('FB',e)}}};
 </script></body></html>
