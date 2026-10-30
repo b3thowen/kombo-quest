@@ -55,8 +55,8 @@ function menu(){stop();const d=get();
  <div class=px style="color:var(--ye)">IGRA 1 · PASKALOV TORANJ</div>
  <button onclick="l1()">NIVO 1 · PASKALOV IDENTITET<br>${stars(d[1]||0)}</button><button onclick="l2()">NIVO 2 · MULTISKUP<br>${stars(d[2]||0)}</button>
  <div class=px style="color:var(--ye)">IGRA 2 · PRELAZ PREKO AMBISA</div>
- <button onclick="l3()">NIVO 1 · REKURENTNE RELACIJE<br>${stars(d[3]||0)}</button><button onclick="l4()">NIVO 2 · ZATVORENI OBLIK<br>${stars(d[4]||0)}</button>
- <div class=box>C(n,k) = C(n-1,k-1) + C(n-1,k)<br>a(n) = 2·a(n-1) + 3·a(n-2)</div>
+ <button onclick="l3()">NIVO 1 · KRATAK ILI DUG SKOK<br>${stars(d[3]||0)}</button><button onclick="l4()">NIVO 2 · SALTO<br>${stars(d[4]||0)}</button>
+ <div class=box>C(n,k) = C(n-1,k-1) + C(n-1,k)<br>a(n) = a(n-1) + a(n-2)<br>a(n) = 2·a(n-1) + a(n-2)</div>
  <button class=alt onclick="rst()">POČNI ISPOČETKA</button>`}
 function rst(){stop();app.innerHTML=`<h1 style="margin-top:30px">ISPOČETKA</h1><div class=box>Šta želiš?</div><button onclick="rs(1)">ISTO IME<br>nuliraj rezultat</button><div class=box>Zadržavaš nadimak, a sve zvezdice se brišu.</div><button onclick="rs(2)">SKROZ ISPOČETKA<br>novo ime</button><div class=box>Brišu se i rezultat i nadimak, pa biraš novi.</div><button class=alt onclick="menu()">ODUSTANI</button>`}
 function rs(m){try{localStorage.removeItem('pt');if(m==2)localStorage.removeItem('pn')}catch(e){}if(m==1){sync();menu()}else nick()}
@@ -128,45 +128,63 @@ function qz(lvl,lab,head,steps,hp,fin,deco){let i=0,bad=[],ok=false;
  window.qn=()=>{i++;ok=false;bad=[];if(i>=steps.length)fin(hp);else R()};R()}
 const HERO=['..hhh..','.hhhhh.','hsssssh','hs1s1sh','.sssss.','.rrrrr.','srrrrrs','.rrrrr.','rrrrrrr','..p.p..','..p.p..'],HP={h:'#854c30',s:'#d2aa99',1:'#140c1c',r:'#d04648',p:'#442434'};
 const hero=(x,y,c='')=>`<g class="${c}">${HERO.map((r,j)=>[...r].map((ch,i)=>HP[ch]?`<rect x="${x+i*2}" y="${y+j*2}" width="2" height="2" fill="${HP[ch]}"/>`:'').join('')).join('')}</g>`;
-const col={G:'#6daa2c',P:'#d2aa99',R:'#d04648',B:'#597dce',Y:'#dad45e'};
-const scene=(n,t,done)=>{const cw=140/n;
- return `<svg class="sc" viewBox="0 0 260 90" shape-rendering="crispEdges"><rect width="260" height="90" fill="#140c1c"/>
- ${[70,92,112,134,156,180,196].map((s,i)=>`<polygon points="${s},90 ${s+7},${78-i%3*4} ${s+14},90" fill="#30346d"/>`).join('')}
+const JT={a:{l:1,c:'#6daa2c',t:'1'},s:{l:1,c:'#6dc2ca',t:'1'},d:{l:2,c:'#dad45e',t:'2'}};
+const rt=k=>[...k].map(c=>`<span style="color:${JT[c].c}">${JT[c].t}</span>`).join('');
+function ambis(lvl,n,tk,total,lim,head,task,fmsg){
+ stop();const my=gen,cols=total==5?5:4;
+ let route=[],found=[],busy=false,fin=false,t0=0,tsec=0,sel='a';
+ const cx=p=>44+p*172/n,sum=()=>route.reduce((s,x)=>s+JT[x].l,0);
+ const pil=[...Array(n-1)].map((_,i)=>{const x=cx(i+1);return `<rect x="${x-8}" y="70" width="16" height="20" fill="#4e4a4e"/><rect x="${x-8}" y="70" width="16" height="3" fill="#757161"/><text x="${x}" y="84" text-anchor="middle" font-family="VT323,monospace" font-size="9" fill="#8595a1">${i+1}</text>`}).join('');
+ app.innerHTML=`<div class=hud><span class=px>NIVO ${lvl-2} · n = ${n}</span><span id=tm class=px style="color:var(--st)">0s</span></div>
+ <div class=box><div class=px style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--st)">KNJIGA RUTA</span><span id=cn style="color:var(--ye)"></span></div><div id=bk style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px"></div></div>
+ <svg class="sc" viewBox="0 0 260 90" shape-rendering="crispEdges"><rect width="260" height="90" fill="#140c1c"/><rect x="56" y="78" width="148" height="12" fill="#30346d"/><rect x="56" y="78" width="148" height="2" fill="#597dce"/>
  <rect y="70" width="56" height="20" fill="#4e4a4e"/><rect y="70" width="56" height="3" fill="#757161"/><rect x="204" y="70" width="56" height="20" fill="#4e4a4e"/><rect x="204" y="70" width="56" height="3" fill="#757161"/>
- <rect x="226" y="36" width="24" height="34" fill="#757161"/><rect x="229" y="39" width="18" height="31" fill="${done?'#dad45e':'#140c1c'}"/>
- ${[...Array(n)].map((_,i)=>`<rect x="${60+i*cw+1}" y="62" width="${cw-2}" height="8" fill="none" stroke="#dad45e" stroke-dasharray="3 2"/>`).join('')}
- ${t.map((q,j)=>{const px=60+t.slice(0,j).reduce((s,z)=>s+z[0],0)*cw;return `<g class="${j==t.length-1&&!done?'dr':''}"><rect x="${px}" y="62" width="${q[0]*cw-1}" height="8" fill="${col[q[1]]}"/><rect x="${px}" y="62" width="${q[0]*cw-1}" height="2" fill="#deeed6"/></g>`}).join('')}
- ${hero(20,48,done?'walk':'')}</svg>`};
-function l3(){stop();const my=gen;let hp=3,r=0;const ns=[3,4,5],A=[0,2,7,20,61,182];
- const head='a(n) = 2·a(n-1) + 3·a(n-2),&nbsp; a(1) = 2, a(2) = 7';
- function build(){const n=ns[r];let t=[];const used=()=>t.reduce((s,x)=>s+x[0],0);
-  const draw=d=>{const u=used();app.innerHTML=`<div class=hud><span class=px>NIVO 1 · n = ${n}</span><span>${hearts(hp)}</span></div>${scene(n,t,d)}
-   <div class=box>${head}<br>Popuni stazu od ${n} polja pločicama 1×1 (2 boje) i 1×2 (3 boje).</div>
-   <div class=row>${[['G',1],['P',1],['R',2],['B',2],['Y',2]].map(([c,l])=>`<button class=alt style="border-bottom:8px solid ${col[c]}" ${u+l>n?'disabled':''} onclick="tp('${c}',${l})">1×${l}</button>`).join('')}</div>
-   <div class=row><button class=alt ${u==n||!u?'disabled':''} onclick="tu()">OBRIŠI</button><button class=alt onclick="menu()">MENI</button></div>`};
-  window.tp=(c,l)=>{t.push([l,c]);draw();if(used()==n){setTimeout(()=>{if(my==gen)draw(true)},500);setTimeout(ask,2300)}};
-  window.tu=()=>{t.pop();draw()};
-  function ask(){if(my!=gen||used()!=n)return;const a=A[n],o=[a,A[n-1]+A[n-2],3*A[n-1]+2*A[n-2]].sort((p,q)=>p-q);
-   qz(3,`NIVO 1 · n = ${n}`,head,[{q:`Koliko ukupno načina postoji za stazu dužine ${n}?`,o,c:o.indexOf(a),e:`Poslednja pločica 1×1: 2·${A[n-1]}. Poslednja 1×2: 3·${A[n-2]}. a(${n}) = ${2*A[n-1]} + ${3*A[n-2]} = ${a}.`}],hp,h=>{hp=h;r++;if(r>=ns.length){put(3,hp);over(true,3,hp)}else build()})}
-  draw()}
- build()}
-function l4(){stop();const my=gen,L=['r^2 = 2r + 3','(r - 3)(r + 1) = 0','A = 3/4,  B = 1/4','a(5) = 182'];
- const deco=(i,ok)=>`<div class="box" style="min-height:130px">${L.map((l,j)=>j<i||(j==i&&ok)?`<div class="${j==i?'pop':''}" style="color:var(--ye);transform-origin:left">${l}</div>`:'<div style="color:var(--slate)">- - - - -</div>').join('')}</div>`;
- const fin=h=>{put(4,h);app.innerHTML=`<h1 style="margin-top:16px">VRATA SE OTVARAJU</h1><svg class="sc" viewBox="0 0 260 110" shape-rendering="crispEdges"><rect width="260" height="110" fill="#140c1c"/><rect x="10" y="8" width="240" height="36" fill="#442434" stroke="#757161" stroke-width="2"/>
-  <text x="130" y="31" text-anchor="middle" font-family="VT323,monospace" font-size="16" fill="#dad45e">a(n) = (3^(n+1) + (-1)^n) / 4</text><rect y="90" width="260" height="20" fill="#4e4a4e"/><rect y="90" width="260" height="3" fill="#757161"/>
-  <rect x="206" y="50" width="34" height="40" fill="#757161"/><rect x="210" y="54" width="26" height="36" fill="#140c1c"/><rect x="210" y="54" width="26" height="36" fill="#dad45e" style="opacity:0;animation:glow 1s .6s forwards;transform-box:fill-box;transform-origin:100% 50%"/>${hero(20,68,'walk')}</svg>`;
-  setTimeout(()=>{if(my==gen)confetti(document.body)},1200);setTimeout(()=>{if(my==gen)over(true,4,h)},3600)};
- qz(4,'NIVO 2','a(n) = 2·a(n-1) + 3·a(n-2),&nbsp; a(1) = 2, a(2) = 7',[
- {q:'Pretpostavi a(n) = r^n. Koja je karakteristična jednačina?',o:['r^2 = 3r + 2','r^2 = 2r + 3','r^2 = 2r - 3'],c:1,e:'Deljenjem sa r^(n-2) dobija se r^2 = 2r + 3, tj. r^2 - 2r - 3 = 0.'},
- {q:'Koji su koreni jednačine r^2 - 2r - 3 = 0?',o:['r = 1 i r = -3','r = 3 i r = 1','r = 3 i r = -1'],c:2,e:'(r - 3)(r + 1) = 0, pa je a(n) = A·3^n + B·(-1)^n.'},
- {q:'Iz a(1) = 2 i a(2) = 7: 3A - B = 2 i 9A + B = 7. Koliko su A i B?',o:['A = 1, B = 1','A = 3/4, B = 1/4','A = 1/4, B = 3/4'],c:1,e:'Sabiranjem: 12A = 9, pa je A = 3/4, a B = 3A - 2 = 1/4.'},
- {q:'Koliko je a(5) po formuli a(n) = (3^(n+1) + (-1)^n) / 4?',o:['181','183','182'],c:2,e:'a(5) = (729 - 1) / 4 = 182, isto kao preko rekurencije.'}],3,fin,deco)}
+ <rect x="226" y="36" width="24" height="34" fill="#757161"/><rect id="gt" x="229" y="39" width="18" height="31" fill="#140c1c"/>${pil}<g id="ar"></g>
+ <g id="hg" transform="translate(${cx(0)-7} 48)">${hero(0,0)}</g><g id="gh"></g><g id="hit"></g></svg>
+ <div class=box id=ms style="min-height:84px">${head}<br>${task}<br><span style="color:var(--st)">Pređi mišem preko polja da vidiš skok, klikni da skočiš.</span></div>
+ <div class=row id=bt>${tk.map(([k,lab],i)=>`<button class=alt id="b${k}" style="flex:1;border-bottom:8px solid ${JT[k].c};font-size:10px;padding:14px 4px" onclick="jp('${k}')">${i+1} · ${lab}</button>`).join('')}</div>
+ <div class=row>${tk.some(t=>t[0]=='s')?'<button class=alt id=tg style="font-size:10px" onclick="tg()"></button>':''}<button class=alt onclick="menu()">MENI</button><button class=alt onclick="l${lvl}()">ODNOVA</button></div>`;
+ const ms=h=>{$('#ms').innerHTML=h};
+ const book=()=>{$('#cn').textContent=found.length+'/'+total;$('#bk').innerHTML=[...Array(total)].map((_,i)=>found[i]?`<div class=px style="padding:10px 2px;text-align:center;font-size:10px;background:var(--plum);border:3px solid var(--slate)">${rt(found[i])}</div>`:`<div class=px style="padding:10px 2px;text-align:center;font-size:10px;color:var(--st);border:3px dashed var(--slate)">?</div>`).join('')};
+ const btn=()=>{const u=sum();tk.forEach(([k])=>{$('#b'+k).disabled=u+JT[k].l>n});hits()};
+ const seg=(p,l,k,o)=>{const x0=cx(p),x1=cx(p+l),xm=(x0+x1)/2,cy=66-14-8*l,py=66+(cy-66)/2;
+  return `<path d="M${x0} 66 Q${xm} ${cy} ${x1} 66" fill="none" stroke="${JT[k].c}" stroke-width="${o?2:1.5}" stroke-dasharray="${o?'3 2':'2 2'}" opacity="${o?.8:1}"/><text x="${xm}" y="${py-3}" text-anchor="middle" font-family="VT323,monospace" font-size="10" fill="${JT[k].c}" opacity="${o?.8:1}">${JT[k].t}</text>`};
+ const arcs=()=>{let p=0;$('#ar').innerHTML=route.map(k=>{const l=JT[k].l,r=seg(p,l,k);p+=l;return r}).join('')};
+ const upd=()=>{const t=$('#tg');if(t){t.textContent='KLIK NA POLJE: '+(sel=='a'?'OBIČAN':'SALTO');t.style.borderBottom='8px solid '+JT[sel].c}};
+ const hits=()=>{const u=sum();$('#hit').innerHTML=busy||fin?'':[1,2].filter(l=>u+l<=n).map(l=>{const p=u+l,x=p==n?204:cx(p)-12,w=p==n?56:24;
+  return `<polygon class="bl" points="${cx(p)-3},60 ${cx(p)+3},60 ${cx(p)},65" fill="#dad45e" pointer-events="none"/><rect x="${x}" y="40" width="${w}" height="50" fill="transparent" style="cursor:pointer" onmouseenter="aim(${p})" onmouseleave="aim(0)" onclick="go(${p})"/>`}).join('')};
+ window.aim=p=>{if(!p||busy||fin){$('#gh').innerHTML='';return}const u=sum(),l=p-u,k=l==2?'d':sel;
+  $('#gh').innerHTML=seg(u,l,k,1)+`<rect x="${p==n?206:cx(p)-8}" y="68" width="${p==n?20:16}" height="3" fill="${JT[k].c}"/>`};
+ window.go=p=>{const l=p-sum();if(l<1||l>2)return;$('#gh').innerHTML='';jp(l==2?'d':sel)};
+ window.tg=()=>{sel=sel=='a'?'s':'a';upd()};
+ const home=()=>{$('#hg').setAttribute('transform',`translate(${cx(0)-7} 48)`)};
+ const anim=(p,q,k,cb)=>{const x0=cx(p)-7,x1=cx(q)-7,H=10+8*JT[k].l,D=320+90*JT[k].l,s=performance.now();
+  (function f(now){if(my!=gen)return;const u=Math.min(1,(now-s)/D),x=x0+(x1-x0)*u,y=48-4*H*u*(1-u),a=k=='s'?-360*u:0;
+   $('#hg').setAttribute('transform',`translate(${x} ${y}) rotate(${a} 7 11)`);
+   if(u<1)raf=requestAnimationFrame(f);else cb()})(s)};
+ const land=()=>{const key=route.join(''),nw=!found.includes(key);if(nw)found.push(key);book();$('#gt').setAttribute('fill','#dad45e');
+  if(found.length==total){fin=true;tsec=(Date.now()-t0)/1000;const s=tsec<=lim[0]?3:tsec<=lim[1]?2:1;
+   ms(`<span style="color:var(--gr)">Knjiga je puna!</span><br>${fmsg}`);
+   setTimeout(()=>{if(my==gen){put(lvl,s);over(true,lvl,s)}},2200);return}
+  ms(nw?`<span style="color:var(--gr)">Nova ruta: ${rt(key)}</span>`:`<span style="color:var(--or)">Ruta ${rt(key)} je već u knjizi.</span>`);
+  setTimeout(()=>{if(my!=gen)return;route=[];arcs();home();$('#gt').setAttribute('fill','#140c1c');busy=false;btn()},900)};
+ window.jp=k=>{if(busy||fin)return;const u=sum(),l=JT[k].l;if(u+l>n)return;if(!t0)t0=Date.now();if(l==1){sel=k;upd()}busy=true;$('#gh').innerHTML='';route.push(k);arcs();btn();
+  anim(u,u+l,k,()=>{if(u+l<n){busy=false;btn()}else land()})};
+ document.onkeydown=e=>{const t=tk[+e.key-1];if(t)jp(t[0])};
+ const iv=setInterval(()=>{if(my!=gen||fin)return clearInterval(iv);if(t0)$('#tm').textContent=Math.floor((Date.now()-t0)/1000)+'s'},250);
+ upd();book();btn()}
+const l3=()=>ambis(3,4,[['a','KRATAK SKOK'],['d','DUG SKOK']],5,[30,60],
+ 'a(n) = a(n-1) + a(n-2),&nbsp; a(1) = 1, a(2) = 2','Pređi ambis dužine n = 4 na sve različite načine, skokom od 1 ili 2 polja. Tasteri 1 i 2.',
+ 'a(4) = a(3) + a(2) = 3 + 2 = 5');
+const l4=()=>ambis(4,3,[['a','OBIČAN'],['s','SALTO'],['d','DUG']],12,[60,120],
+ 'a(n) = 2·a(n-1) + a(n-2),&nbsp; a(1) = 2, a(2) = 5','Kratak skok može biti običan ili salto. Pređi ambis dužine n = 3 na sve načine. Tasteri 1, 2 i 3.',
+ 'a(3) = 2·a(2) + a(1) = 2·5 + 2 = 12');
 function nick(){stop();let n='';try{n=localStorage.pn||''}catch(e){}
  if(n){window.FB&&FB.sync(n,get());return menu()}
- app.innerHTML=`<h1 style="margin-top:40px">username?</h1><div class="box">Ukucaj nadimak (ne pravo ime). Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
+ app.innerHTML=`<h1 style="margin-top:40px">KAKO SE ZOVEŠ?</h1><div class="box">Ukucaj nadimak (ne pravo ime). Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
  window.nk=()=>{const v=$('#ni').value.trim().slice(0,20);if(!v)return;try{localStorage.pn=v}catch(e){}window.FB&&FB.sync(v,get());menu()};
  $('#ni').onkeydown=e=>{if(e.key=='Enter')nk()}}
- function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
  app.innerHTML=`<canvas id="rain" style="position:fixed;inset:0;border:0"></canvas><div style="position:relative;margin:auto;text-align:center"><h1 id="tx" style="font-size:20px;min-height:32px;color:var(--wh)"></h1><div id="hh" style="font:28px 'Press Start 2P',monospace;color:var(--red);min-height:56px;margin-top:14px"></div><div id="tp" class="px" style="color:var(--st);margin-top:34px;visibility:hidden">KLIKNI ZA POČETAK</div><div class="px bl" style="position:fixed;left:0;right:0;bottom:calc(24px + env(safe-area-inset-bottom));text-align:center;color:var(--st);font-size:12px">b3thowen</div></div>`;
  const cv=$('#rain'),g=cv.getContext('2d'),fs=18;let w=cv.width=innerWidth,h=cv.height=innerHeight;
  const y=[...Array(Math.ceil(w/fs))].map(()=>-Math.random()*40|0),rc=()=>AB[Math.random()*AB.length|0];
