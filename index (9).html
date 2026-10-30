@@ -1,0 +1,180 @@
+<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Paskalov Toranj</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#140c1c;--plum:#442434;--navy:#30346d;--slate:#4e4a4e;--red:#d04648;--or:#d27d2c;--cy:#6dc2ca;--ye:#dad45e;--wh:#deeed6;--st:#8595a1;--gr:#6daa2c}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--ink);color:var(--wh);font:24px VT323,monospace;touch-action:manipulation}
+#app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;gap:12px;padding:12px}
+h1{font:18px/1.6 'Press Start 2P',monospace;color:var(--ye);text-align:center}
+.px{font:11px 'Press Start 2P',monospace}
+button{font:12px/1.5 'Press Start 2P',monospace;background:var(--ye);color:var(--ink);border:0;border-bottom:4px solid var(--or);padding:14px 12px;min-height:48px;cursor:pointer}
+button.alt{background:var(--navy);color:var(--wh);border-color:var(--ink)}
+button:disabled{background:var(--slate);color:var(--st);border-color:var(--ink);cursor:default}
+button.cr{width:60px;height:60px;min-height:0;padding:0;border:0;color:var(--ink);font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+button.cr small{font:16px VT323}
+button.cr.A,span.cr.A{background:var(--or);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+button.cr.B,span.cr.B{background:var(--cy)}
+button.cr.C,span.cr.C{background:var(--red);clip-path:polygon(50% 0,100% 100%,0 100%);padding-top:14px}
+button.cr:disabled{opacity:.3}
+span.cr{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink);font:12px 'Press Start 2P'}
+.hud{display:flex;justify-content:space-between;align-items:center;font-size:26px}
+.box{background:var(--plum);border:3px solid var(--slate);padding:10px}
+.slot{width:48px;height:48px;border:3px solid var(--slate);display:flex;align-items:center;justify-content:center;background:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}
+canvas{width:100%;display:block;border:3px solid var(--slate);touch-action:none}
+#ov{position:fixed;inset:0;background:rgba(20,12,28,.93);display:flex;flex-direction:column;gap:20px;align-items:center;justify-content:center;padding:20px;text-align:center;overflow:hidden}
+@keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes dr{from{transform:translateY(-70px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fall{to{transform:translateY(115vh) rotate(540deg)}}
+@keyframes walk{to{transform:translateX(190px)}}
+@keyframes glow{from{opacity:0;transform:scaleX(.1)}to{opacity:1;transform:scaleX(1)}}
+.pop{animation:pop .3s}.sh{animation:shake .35s}.dr{animation:dr .35s cubic-bezier(.3,1.6,.5,1)}.walk{animation:walk 1.3s .15s linear forwards}
+.cf{position:fixed;top:-20px;width:10px;height:14px;z-index:9;pointer-events:none;animation:fall linear forwards}
+svg.sc{width:100%;display:block;border:3px solid var(--slate)}
+@keyframes bl{50%{opacity:0}}.bl{animation:bl 1s steps(1) infinite}
+</style></head><body><div id="app"></div><script>
+const $=s=>document.querySelector(s),app=$('#app');
+const C=(n,k)=>{let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return Math.round(r)};
+const F=n=>n<2?1:n*F(n-1);
+const get=()=>{try{return JSON.parse(localStorage.pt)||{}}catch(e){return{}}};
+const put=(l,s)=>{try{const d=get();d[l]=Math.max(d[l]||0,s);localStorage.pt=JSON.stringify(d)}catch(e){}};
+const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+const hearts=h=>`<span style="color:var(--red)">${'♥'.repeat(h)}</span><span style="color:var(--slate)">${'♥'.repeat(3-h)}</span>`;
+let raf=0,gen=0;
+const shake=()=>{app.classList.remove('sh');void app.offsetWidth;app.classList.add('sh')};
+function confetti(o){for(let i=0;i<50;i++){const d=document.createElement('div');d.className='cf';d.style.cssText=`left:${Math.random()*100}%;background:${['#dad45e','#d04648','#6dc2ca','#6daa2c','#d27d2c'][i%5]};animation-duration:${1.6+Math.random()*1.6}s;animation-delay:${Math.random()*.6}s`;o.appendChild(d);setTimeout(()=>d.remove(),4500)}}
+function stop(){gen++;cancelAnimationFrame(raf);document.onkeydown=null;const o=$('#ov');o&&o.remove()}
+function over(win,lvl,h){const o=document.createElement('div');o.id='ov';
+ o.innerHTML=(win?`<h1>NIVO ZAVRŠEN</h1><div style="font-size:44px;color:var(--ye)">${stars(h)}</div>`:`<h1 style="color:var(--red)">KRAJ IGRE</h1><div>Ostala su ti 0 srca. Pokušaj ponovo!</div>`)+
+ `<div class=row>${win&&(lvl==1||lvl==3)?`<button onclick="l${lvl+1}()">DALJE</button>`:''}<button class="${win&&(lvl==1||lvl==3)?'alt':''}" onclick="l${lvl}()">${win?'PONOVI':'IGRAJ PONOVO'}</button><button class=alt onclick="menu()">MENI</button></div>`;
+ document.body.appendChild(o);win&&confetti(o)}
+function menu(){stop();const d=get();
+ app.innerHTML=`<h1 style="margin-top:20px">EDUKATIVNE<br>IGRICE</h1><div class=box>Kad izgubiš, počni ponovo - igre se uvek mogu igrati iznova.</div>
+ <div class=px style="color:var(--ye)">IGRA 1 · PASKALOV TORANJ</div>
+ <button onclick="l1()">NIVO 1 · PASKALOV IDENTITET<br>${stars(d[1]||0)}</button><button onclick="l2()">NIVO 2 · MULTISKUP<br>${stars(d[2]||0)}</button>
+ <div class=px style="color:var(--ye)">IGRA 2 · PRELAZ PREKO AMBISA</div>
+ <button onclick="l3()">NIVO 1 · REKURENTNE RELACIJE<br>${stars(d[3]||0)}</button><button onclick="l4()">NIVO 2 · ZATVORENI OBLIK<br>${stars(d[4]||0)}</button>
+ <div class=box>C(n,k) = C(n-1,k-1) + C(n-1,k)<br>a(n) = 2·a(n-1) + 3·a(n-2)</div>`}
+// ---------- NIVO 1: hvatanje cigli
+function l1(){stop();const W=360,H=480,L=5,LW=W/L,HY=H-56;
+ app.innerHTML=`<div class=hud><span class=px>NIVO 1</span><span id=hh></span><span id=sc class=px></span></div><canvas id=cv width=${W} height=${H}></canvas><div class=box style="text-align:center">Uhvati dve cigle čiji je zbir polje C(n,k). Pomeraj: dodir/prevlačenje ili strelice.</div><div class=row><button class=alt onclick="menu()">MENI</button><button class=alt onclick="l1()">ODNOVA</button></div>`;
+ const cv=$('#cv'),g=cv.getContext('2d'),rounds=[[3,1],[4,1],[4,2],[5,2],[6,3]];
+ let hp=3,score=0,ri=0,hx=2,x=hx*LW+LW/2,bricks=[],tm=0,got=[],st='play',pt=0,fl=0,a,b,need,dec,last=0,ps=[];
+ function setup(){const[n,k]=rounds[ri];a=C(n-1,k-1);b=C(n-1,k);need=[a,b];got=[];
+  dec=[...Array(n)].map((_,j)=>C(n-1,j)).filter(v=>v!=a&&v!=b);if(!dec.length)dec=[a+b+1];bricks=[];tm=0}
+ setup();
+ const sp=(x,y,c,n)=>{for(let i=0;i<n;i++)ps.push({x,y,vx:(Math.random()-.5)*220,vy:-Math.random()*200-40,l:.7,c})};
+ const mv=e=>{const r=cv.getBoundingClientRect();hx=Math.max(0,Math.min(L-1,Math.floor((e.clientX-r.left)/r.width*L)))};
+ cv.onpointerdown=e=>{mv(e);cv.setPointerCapture(e.pointerId)};cv.onpointermove=e=>{if(e.buttons||e.pointerType=='touch')mv(e)};
+ document.onkeydown=e=>{if(e.key=='ArrowLeft'||e.key=='a')hx=Math.max(0,hx-1);if(e.key=='ArrowRight'||e.key=='d')hx=Math.min(L-1,hx+1)};
+ function spawn(){let l;do l=Math.random()*L|0;while(bricks.some(o=>o.y<250&&o.l==l));
+  const v=need.length&&Math.random()<.5?need[Math.random()*need.length|0]:dec[Math.random()*dec.length|0];bricks.push({l,y:190,v})}
+ function update(dt){x+=(hx*LW+LW/2-x)*Math.min(1,dt*14);fl=Math.max(0,fl-dt);
+  ps.forEach(q=>{q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=500*dt;q.l-=dt});ps=ps.filter(q=>q.l>0);
+  if(st=='pause'){pt-=dt;if(pt<=0){ri++;if(ri>=rounds.length){st='end';put(1,hp);over(true,1,hp)}else{setup();st='play'}}return}
+  tm+=dt;if(tm>1){tm=0;spawn()}
+  bricks.forEach(o=>o.y+=(100+ri*10)*dt);
+  bricks=bricks.filter(o=>{if(o.y+20>=HY&&o.y<HY+30&&o.l==hx){const i=need.indexOf(o.v);
+    if(i>=0){need.splice(i,1);got.push(o.v);score+=10;sp(x,HY,'#dad45e',10)}else{hp--;fl=.3;sp(x,HY,'#d04648',14);shake()}return false}return o.y<H});
+  if(hp<=0){st='end';over(false,1)}else if(!need.length){st='pause';pt=1.6;score+=50;bricks=[];const[n,k]=rounds[ri];sp(W/2-(n+1)*21+k*42+21,34+n*22+10,'#dad45e',30)}}
+ function B(px,py,v,t,hl){g.fillStyle=t=='e'?'#442434':t=='y'?'#dad45e':'#854c30';g.fillRect(px,py,40,20);
+  if(t=='q'){g.strokeStyle='#dad45e';g.setLineDash([4,3]);g.strokeRect(px+1,py+1,38,18);g.setLineDash([])}
+  else if(t!='e'){g.fillStyle=t=='y'?'#d27d2c':'#d27d2c';g.fillRect(px,py,40,2);g.fillStyle=t=='y'?'#d27d2c':'#442434';g.fillRect(px,py+18,40,2)}
+  if(hl){g.strokeStyle='#deeed6';g.lineWidth=2;g.strokeRect(px-1,py-1,42,22);g.lineWidth=1}
+  g.fillStyle=t=='y'||t=='q'?(t=='q'?'#dad45e':'#140c1c'):'#deeed6';g.font='22px VT323';g.textAlign='center';g.fillText(v,px+20,py+16)}
+ function draw(){g.fillStyle='#140c1c';g.fillRect(0,0,W,H);const[n,k]=rounds[ri],P=st=='pause';
+  g.font='26px VT323';g.textAlign='left';g.fillStyle='#dad45e';g.fillText(`C(${n},${k}) = ?`,8,22);
+  g.textAlign='right';g.fillStyle='#8595a1';g.fillText('TORBA '+(got.length?got.map(v=>`[${v}]`).join(' '):'[ ]'),W-8,22);
+  for(let r=0;r<=n;r++)for(let j=0;j<=r;j++){const px=W/2-(r+1)*21+j*42+1,py=34+r*22;
+   if(r<n)B(px,py,C(r,j),'n',P&&r==n-1&&(j==k-1||j==k));else if(j==k)B(px,py,P?a+b:'?',P?'y':'q');else B(px,py,'','e')}
+  bricks.forEach(o=>B(o.l*LW+LW/2-20,o.y,o.v,'n'));
+  if(P){g.fillStyle='#dad45e';g.font='28px VT323';g.textAlign='center';g.fillText(`C(${n},${k}) = ${a} + ${b} = ${a+b}`,W/2,300)}
+  ps.forEach(q=>{g.fillStyle=q.c;g.fillRect(q.x,q.y,4,4)});const hy=HY;g.fillStyle='#597dce';g.fillRect(x-12,hy,24,8);g.fillStyle='#d2aa99';g.fillRect(x-9,hy+8,18,10);g.fillStyle='#140c1c';g.fillRect(x-5,hy+11,3,3);g.fillRect(x+2,hy+11,3,3);
+  g.fillStyle='#deeed6';g.fillRect(x-12,hy+18,24,14);g.fillStyle='#442434';g.fillRect(x-9,hy+32,7,14);g.fillRect(x+2,hy+32,7,14);
+  g.fillStyle='#757161';g.fillRect(0,H-8,W,8);
+  if(fl>0){g.strokeStyle='#d04648';g.lineWidth=6;g.strokeRect(0,0,W,H);g.lineWidth=1}
+  $('#hh').innerHTML=hearts(hp);$('#sc').textContent=String(score).padStart(4,'0')}
+ (function loop(ts){const dt=Math.min((ts-(last||ts))/1000,.05);last=ts;update(dt);draw();if(st!='end')raf=requestAnimationFrame(loop)})(performance.now())}
+// ---------- NIVO 2: multiskup
+function l2(){stop();const sets=[['A','A','B'],['A','A','B','B','C'],['A','A','A','B','B','C']];let hp=3,i=0,seq=[],found=new Set(),mode='build',bad=[],msg='',s,cnt,ks,ans,fm,opts;
+ function init(){s=sets[i];cnt={};s.forEach(c=>cnt[c]=(cnt[c]||0)+1);ks=Object.keys(cnt);ans=F(s.length)/ks.reduce((p,c)=>p*F(cnt[c]),1);
+  fm=`${s.length}! / (${ks.map(c=>cnt[c]+'!').join('·')}) = ${ans}`;
+  const d=[...new Set([F(s.length),ans*2,ans+s.length,ans-1])].filter(v=>v!=ans&&v>0).slice(0,2);
+  opts=[ans,...d].sort((p,q)=>(p*7%5)-(q*7%5)||p-q);seq=[];found=new Set();mode='build';bad=[];msg='';render()}
+ const cr=(c,f)=>`<span class="cr ${c}${f?' pop':''}">${c}</span>`;
+ function render(){const left={...cnt};seq.forEach(c=>left[c]--);
+  app.innerHTML=`<div class=hud><span class=px>NIVO 2 · ${i+1}/3</span><span>${hearts(hp)}</span></div>
+  <div class=box>MULTISKUP {${s.join(', ')}}<br>${mode=='build'?'Poređaj kristale na različite načine. Nađi bar 3 rasporeda.':'Koliko ukupno različitih rasporeda postoji?'}</div>
+  ${mode=='build'?`<div class=row>${s.map((_,j)=>`<div class=slot>${seq[j]?cr(seq[j],j==seq.length-1):''}</div>`).join('')}</div>
+  <div class=row>${ks.map(c=>`<button class="cr ${c}" ${left[c]?'':'disabled'} onclick="pick('${c}')">${c}<small>x${left[c]}</small></button>`).join('')}<button class=alt onclick="clr()">OBRIŠI</button></div>
+  <div class=box>NAĐENO: ${found.size}<br><span style="color:var(--ye)">${[...found].join('  ')}</span><br><span class="pop" style="display:inline-block;color:var(--gr)">${msg}</span></div>
+  <button ${found.size>=3?'':'disabled'} onclick="ask()">ZNAM KOLIKO IH IMA</button>`
+  :`<div class=row>${opts.map(v=>`<button class=alt ${bad.includes(v)||msg?'disabled':''} onclick="ans_(${v})">${v}</button>`).join('')}</div>
+  ${msg?`<div class=box style="color:var(--gr)">Tačno! ${fm}</div><button onclick="nxt()">DALJE</button>`:bad.length?'<div class=box style="color:var(--red)">Netačno, pokušaj ponovo.</div>':''}`}
+  <button class=alt onclick="menu()">MENI</button>`}
+ window.pick=c=>{seq.push(c);if(seq.length==s.length){const k=seq.join('');msg=found.has(k)?'To već imaš!':'Novi raspored!';found.add(k);seq=[]}render()};
+ window.clr=()=>{seq=[];render()};window.ask=()=>{mode='ask';msg='';render()};
+ window.ans_=v=>{if(v==ans){msg='ok';render()}else{bad.push(v);hp--;shake();if(hp<=0)over(false,2);else render()}};
+ window.nxt=()=>{i++;if(i>=sets.length){put(2,hp);over(true,2,hp)}else init()};
+ init()}
+// ---------- IGRA 2: kviz sa koracima
+function qz(lvl,lab,head,steps,hp,fin,deco){let i=0,bad=[],ok=false;
+ const R=()=>{const s=steps[i];app.innerHTML=`<div class=hud><span class=px>${lab} · ${i+1}/${steps.length}</span><span>${hearts(hp)}</span></div><div class=box>${head}</div>${deco?deco(i,ok):''}<div class=box>${s.q}</div>
+ <div class=row>${s.o.map((v,j)=>`<button class=alt ${bad.includes(j)||ok?'disabled':''} onclick="qa(${j})">${v}</button>`).join('')}</div>
+ ${ok?`<div class=box style="color:var(--gr)">Tačno! ${s.e}</div><button onclick="qn()">DALJE</button>`:bad.length?'<div class=box style="color:var(--red)">Netačno, pokušaj ponovo.</div>':''}<button class=alt onclick="menu()">MENI</button>`};
+ window.qa=j=>{if(j==steps[i].c)ok=true;else{bad.push(j);hp--;shake();if(hp<=0)return over(false,lvl)}R()};
+ window.qn=()=>{i++;ok=false;bad=[];if(i>=steps.length)fin(hp);else R()};R()}
+// ---------- NIVO 3: staza preko ambisa
+const HERO=['..hhh..','.hhhhh.','hsssssh','hs1s1sh','.sssss.','.rrrrr.','srrrrrs','.rrrrr.','rrrrrrr','..p.p..','..p.p..'],HP={h:'#854c30',s:'#d2aa99',1:'#140c1c',r:'#d04648',p:'#442434'};
+const hero=(x,y,c='')=>`<g class="${c}">${HERO.map((r,j)=>[...r].map((ch,i)=>HP[ch]?`<rect x="${x+i*2}" y="${y+j*2}" width="2" height="2" fill="${HP[ch]}"/>`:'').join('')).join('')}</g>`;
+const col={G:'#6daa2c',P:'#d2aa99',R:'#d04648',B:'#597dce',Y:'#dad45e'};
+const scene=(n,t,done)=>{const cw=140/n;
+ return `<svg class="sc" viewBox="0 0 260 90" shape-rendering="crispEdges"><rect width="260" height="90" fill="#140c1c"/>
+ ${[70,92,112,134,156,180,196].map((s,i)=>`<polygon points="${s},90 ${s+7},${78-i%3*4} ${s+14},90" fill="#30346d"/>`).join('')}
+ <rect y="70" width="56" height="20" fill="#4e4a4e"/><rect y="70" width="56" height="3" fill="#757161"/><rect x="204" y="70" width="56" height="20" fill="#4e4a4e"/><rect x="204" y="70" width="56" height="3" fill="#757161"/>
+ <rect x="226" y="36" width="24" height="34" fill="#757161"/><rect x="229" y="39" width="18" height="31" fill="${done?'#dad45e':'#140c1c'}"/>
+ ${[...Array(n)].map((_,i)=>`<rect x="${60+i*cw+1}" y="62" width="${cw-2}" height="8" fill="none" stroke="#dad45e" stroke-dasharray="3 2"/>`).join('')}
+ ${t.map((q,j)=>{const px=60+t.slice(0,j).reduce((s,z)=>s+z[0],0)*cw;return `<g class="${j==t.length-1&&!done?'dr':''}"><rect x="${px}" y="62" width="${q[0]*cw-1}" height="8" fill="${col[q[1]]}"/><rect x="${px}" y="62" width="${q[0]*cw-1}" height="2" fill="#deeed6"/></g>`}).join('')}
+ ${hero(20,48,done?'walk':'')}</svg>`};
+function l3(){stop();const my=gen;let hp=3,r=0;const ns=[3,4,5],A=[0,2,7,20,61,182];
+ const head='a(n) = 2·a(n-1) + 3·a(n-2),&nbsp; a(1) = 2, a(2) = 7';
+ function build(){const n=ns[r];let t=[];const used=()=>t.reduce((s,x)=>s+x[0],0);
+  const draw=d=>{const u=used();app.innerHTML=`<div class=hud><span class=px>NIVO 1 · n = ${n}</span><span>${hearts(hp)}</span></div>${scene(n,t,d)}
+   <div class=box>${head}<br>Popuni stazu od ${n} polja pločicama 1×1 (2 boje) i 1×2 (3 boje).</div>
+   <div class=row>${[['G',1],['P',1],['R',2],['B',2],['Y',2]].map(([c,l])=>`<button class=alt style="border-bottom:8px solid ${col[c]}" ${u+l>n?'disabled':''} onclick="tp('${c}',${l})">1×${l}</button>`).join('')}</div>
+   <div class=row><button class=alt ${u==n||!u?'disabled':''} onclick="tu()">OBRIŠI</button><button class=alt onclick="menu()">MENI</button></div>`};
+  window.tp=(c,l)=>{t.push([l,c]);draw();if(used()==n){setTimeout(()=>{if(my==gen)draw(true)},500);setTimeout(ask,2300)}};
+  window.tu=()=>{t.pop();draw()};
+  function ask(){if(my!=gen||used()!=n)return;const a=A[n],o=[a,A[n-1]+A[n-2],3*A[n-1]+2*A[n-2]].sort((p,q)=>p-q);
+   qz(3,`NIVO 1 · n = ${n}`,head,[{q:`Koliko ukupno načina postoji za stazu dužine ${n}?`,o,c:o.indexOf(a),e:`Poslednja pločica 1×1: 2·${A[n-1]}. Poslednja 1×2: 3·${A[n-2]}. a(${n}) = ${2*A[n-1]} + ${3*A[n-2]} = ${a}.`}],hp,h=>{hp=h;r++;if(r>=ns.length){put(3,hp);over(true,3,hp)}else build()})}
+  draw()}
+ build()}
+// ---------- NIVO 4: zatvoreni oblik
+function l4(){stop();const my=gen,L=['r^2 = 2r + 3','(r - 3)(r + 1) = 0','A = 3/4,  B = 1/4','a(5) = 182'];
+ const deco=(i,ok)=>`<div class="box" style="min-height:130px">${L.map((l,j)=>j<i||(j==i&&ok)?`<div class="${j==i?'pop':''}" style="color:var(--ye);transform-origin:left">${l}</div>`:'<div style="color:var(--slate)">- - - - -</div>').join('')}</div>`;
+ const fin=h=>{put(4,h);app.innerHTML=`<h1 style="margin-top:16px">VRATA SE OTVARAJU</h1><svg class="sc" viewBox="0 0 260 110" shape-rendering="crispEdges"><rect width="260" height="110" fill="#140c1c"/><rect x="10" y="8" width="240" height="36" fill="#442434" stroke="#757161" stroke-width="2"/>
+  <text x="130" y="31" text-anchor="middle" font-family="VT323,monospace" font-size="16" fill="#dad45e">a(n) = (3^(n+1) + (-1)^n) / 4</text><rect y="90" width="260" height="20" fill="#4e4a4e"/><rect y="90" width="260" height="3" fill="#757161"/>
+  <rect x="206" y="50" width="34" height="40" fill="#757161"/><rect x="210" y="54" width="26" height="36" fill="#140c1c"/><rect x="210" y="54" width="26" height="36" fill="#dad45e" style="opacity:0;animation:glow 1s .6s forwards;transform-box:fill-box;transform-origin:100% 50%"/>${hero(20,68,'walk')}</svg>`;
+  setTimeout(()=>{if(my==gen)confetti(document.body)},1200);setTimeout(()=>{if(my==gen)over(true,4,h)},3600)};
+ qz(4,'NIVO 2','a(n) = 2·a(n-1) + 3·a(n-2),&nbsp; a(1) = 2, a(2) = 7',[
+ {q:'Pretpostavi a(n) = r^n. Koja je karakteristična jednačina?',o:['r^2 = 3r + 2','r^2 = 2r + 3','r^2 = 2r - 3'],c:1,e:'Deljenjem sa r^(n-2) dobija se r^2 = 2r + 3, tj. r^2 - 2r - 3 = 0.'},
+ {q:'Koji su koreni jednačine r^2 - 2r - 3 = 0?',o:['r = 1 i r = -3','r = 3 i r = 1','r = 3 i r = -1'],c:2,e:'(r - 3)(r + 1) = 0, pa je a(n) = A·3^n + B·(-1)^n.'},
+ {q:'Iz a(1) = 2 i a(2) = 7: 3A - B = 2 i 9A + B = 7. Koliko su A i B?',o:['A = 1, B = 1','A = 3/4, B = 1/4','A = 1/4, B = 3/4'],c:1,e:'Sabiranjem: 12A = 9, pa je A = 3/4, a B = 3A - 2 = 1/4.'},
+ {q:'Koliko je a(5) po formuli a(n) = (3^(n+1) + (-1)^n) / 4?',o:['181','183','182'],c:2,e:'a(5) = (729 - 1) / 4 = 182, isto kao preko rekurencije.'}],3,fin,deco)}
+// ---------- UVOD
+function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+ app.innerHTML=`<canvas id="rain" style="position:fixed;inset:0;border:0"></canvas><div style="position:relative;margin:auto;text-align:center"><h1 id="tx" style="font-size:20px;min-height:32px;color:var(--wh)"></h1><div id="hh" style="font:28px 'Press Start 2P',monospace;color:var(--red);min-height:56px;margin-top:14px"></div><div id="tp" class="px" style="color:var(--st);margin-top:34px;visibility:hidden">KLIKNI ZA POČETAK</div><div class="px bl" style="position:fixed;left:0;right:0;bottom:calc(24px + env(safe-area-inset-bottom));text-align:center;color:var(--st);font-size:12px">b3thowen</div></div>`;
+ const cv=$('#rain'),g=cv.getContext('2d'),fs=18;let w=cv.width=innerWidth,h=cv.height=innerHeight;
+ const y=[...Array(Math.ceil(w/fs))].map(()=>-Math.random()*40|0),rc=()=>AB[Math.random()*AB.length|0];
+ const go=()=>{app.onclick=null;menu()};document.onkeydown=go;app.onclick=go;
+ const t0=performance.now();let lt=0;
+ (function loop(ts){if(!$('#rain'))return;
+  g.fillStyle='rgba(20,12,28,.14)';g.fillRect(0,0,w,h);g.font=fs+'px VT323,monospace';g.fillStyle='#346524';
+  y.forEach((v,i)=>{g.fillText(rc(),i*fs,v*fs);y[i]=v*fs>h&&Math.random()>.97?0:v+1});
+  const e=ts-t0,r=Math.max(0,Math.min(T.length,Math.floor((e-1500)/130)));
+  if(ts-lt>60){lt=ts;$('#tx').textContent=[...T].map((c,i)=>c==' '||i<r?c:rc()).join('')}
+  if(r==T.length){$('#hh').innerHTML='3&lt;3';$('#tp').style.visibility=Math.floor(e/500)%2?'hidden':'visible'}
+  raf=requestAnimationFrame(loop)})(performance.now())}
+intro();
+</script></body></html>
