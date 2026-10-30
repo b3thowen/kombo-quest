@@ -51,7 +51,7 @@ function over(win,lvl,h){const tot=[1,2,3,4].reduce((s,l)=>s+(get()[l]||0),0);co
  `<div class=row>${win&&(lvl==1||lvl==3)?`<button onclick="l${lvl+1}()">DALJE</button>`:''}<button class="${win&&(lvl==1||lvl==3)?'alt':''}" onclick="l${lvl}()">${win?'PONOVI':'IGRAJ PONOVO'}</button><button class=alt onclick="menu()">MENI</button></div>`;
  document.body.appendChild(o);win&&confetti(o)}
 function menu(){stop();const d=get();
- app.innerHTML=`<h1 style="margin-top:20px">EDUKATIVNE<br>IGRICE</h1><div class=box>Kad izgubiš, počni ponovo - igre se uvek mogu igrati iznova.</div>
+ app.innerHTML=`<h1 style="margin-top:20px">DISKRETNA<br>MATEMATIKA</h1><div class=box>Kad izgubiš, počni ponovo - igre se uvek mogu igrati iznova.</div>
  <div class=px style="color:var(--ye)">IGRA 1 · PASKALOV TORANJ</div>
  <button onclick="l1()">NIVO 1 · PASKALOV IDENTITET<br>${stars(d[1]||0)}</button><button onclick="l2()">NIVO 2 · MULTISKUP<br>${stars(d[2]||0)}</button>
  <div class=px style="color:var(--ye)">IGRA 2 · PRELAZ PREKO AMBISA</div>
