@@ -1,0 +1,19 @@
+<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title>
+<style>body{margin:0;padding:16px;background:#140c1c;color:#deeed6;font:20px monospace}button{font:14px monospace;padding:10px 14px;background:#dad45e;border:0;cursor:pointer;margin-right:8px}
+table{border-collapse:collapse;width:100%;margin-top:16px}th,td{border-bottom:1px solid #4e4a4e;padding:8px;text-align:left}th{color:#dad45e}#m{color:#8595a1;margin-top:10px}.w{overflow-x:auto}</style></head><body>
+<h2>Rezultati igrača</h2><div><button id="in">Prijavi se (Google)</button><button id="rf" hidden>Osveži</button><button id="out" hidden>Odjavi se</button></div><div id="m"></div><div class="w"><table id="t"></table></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import {getAuth,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import {getFirestore,collection,query,orderBy,limit,getDocs} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyAcZhcVKFcEbdI_EpSve8N2T-gLwpBkiy0",authDomain:"kombo-quest.firebaseapp.com",projectId:"kombo-quest",storageBucket:"kombo-quest.firebasestorage.app",messagingSenderId:"1038737523411",appId:"1:1038737523411:web:91653f0bb911814bbf8a26"});
+const auth=getAuth(app),db=getFirestore(app),$=s=>document.querySelector(s);
+const cell=(r,t,h)=>{const c=r.insertCell();c.textContent=t;if(h)c.style.color='#dad45e'};
+async function load(){const m=$('#m'),t=$('#t');m.textContent='Učitavanje...';t.innerHTML='';
+ try{const s=await getDocs(query(collection(db,'players'),orderBy('total','desc'),limit(500)));
+  const h=t.insertRow();['#','Nadimak','Ukupno','N1','N2','N3','N4','Poslednji ulazak'].forEach(x=>{const c=document.createElement('th');c.textContent=x;h.appendChild(c)});
+  let i=0;s.forEach(d=>{const p=d.data(),st=p.stars||{},r=t.insertRow();cell(r,++i);cell(r,p.nick||'?');cell(r,(p.total||0)+'/12',1);[1,2,3,4].forEach(l=>cell(r,st[l]||0));cell(r,p.last?.toDate?p.last.toDate().toLocaleString('sr'):'')});
+  m.textContent='Igrača: '+s.size}catch(e){m.textContent='Nemaš pristup ili je greška: '+e.code}}
+onAuthStateChanged(auth,u=>{const ok=u&&!u.isAnonymous;$('#in').hidden=ok;$('#out').hidden=$('#rf').hidden=!ok;if(ok){$('#m').textContent=u.email;load()}});
+$('#in').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());$('#out').onclick=()=>signOut(auth);$('#rf').onclick=load;
+</script></body></html>
