@@ -45,7 +45,7 @@ const hearts=h=>`<span style="color:var(--red)">${'♥'.repeat(h)}</span><span s
 let raf=0,gen=0;
 const shake=()=>{app.classList.remove('sh');void app.offsetWidth;app.classList.add('sh')};
 function confetti(o){for(let i=0;i<50;i++){const d=document.createElement('div');d.className='cf';d.style.cssText=`left:${Math.random()*100}%;background:${['#dad45e','#d04648','#6dc2ca','#6daa2c','#d27d2c'][i%5]};animation-duration:${1.6+Math.random()*1.6}s;animation-delay:${Math.random()*.6}s`;o.appendChild(d);setTimeout(()=>d.remove(),4500)}}
-function stop(){gen++;cancelAnimationFrame(raf);document.onkeydown=null;const o=$('#ov');o&&o.remove()}
+function stop(){gen++;app.onclick=null;cancelAnimationFrame(raf);document.onkeydown=null;const o=$('#ov');o&&o.remove()}
 function over(win,lvl,h){const tot=[1,2,3,4].reduce((s,l)=>s+(get()[l]||0),0);const o=document.createElement('div');o.id='ov';
  o.innerHTML=(win?`<h1>NIVO ZAVRŠEN</h1><div style="font-size:44px;color:var(--ye)">${stars(h)}</div><div class="px" style="color:var(--wh)">UKUPNO: ${tot}/12</div>`:`<h1 style="color:var(--red)">KRAJ IGRE</h1><div>Ostala su ti 0 srca. Pokušaj ponovo!</div>`)+
  `<div class=row>${win&&(lvl==1||lvl==3)?`<button onclick="l${lvl+1}()">DALJE</button>`:''}<button class="${win&&(lvl==1||lvl==3)?'alt':''}" onclick="l${lvl}()">${win?'PONOVI':'IGRAJ PONOVO'}</button><button class=alt onclick="menu()">MENI</button></div>`;
@@ -56,7 +56,10 @@ function menu(){stop();const d=get();
  <button onclick="l1()">NIVO 1 · PASKALOV IDENTITET<br>${stars(d[1]||0)}</button><button onclick="l2()">NIVO 2 · MULTISKUP<br>${stars(d[2]||0)}</button>
  <div class=px style="color:var(--ye)">IGRA 2 · PRELAZ PREKO AMBISA</div>
  <button onclick="l3()">NIVO 1 · REKURENTNE RELACIJE<br>${stars(d[3]||0)}</button><button onclick="l4()">NIVO 2 · ZATVORENI OBLIK<br>${stars(d[4]||0)}</button>
- <div class=box>C(n,k) = C(n-1,k-1) + C(n-1,k)<br>a(n) = 2·a(n-1) + 3·a(n-2)</div>`}
+ <div class=box>C(n,k) = C(n-1,k-1) + C(n-1,k)<br>a(n) = 2·a(n-1) + 3·a(n-2)</div>
+ <button class=alt onclick="rst()">POČNI ISPOČETKA</button>`}
+function rst(){stop();app.innerHTML=`<h1 style="margin-top:30px">ISPOČETKA</h1><div class=box>Šta želiš?</div><button onclick="rs(1)">ISTO IME<br>nuliraj rezultat</button><div class=box>Zadržavaš nadimak, a sve zvezdice se brišu.</div><button onclick="rs(2)">SKROZ ISPOČETKA<br>novo ime</button><div class=box>Brišu se i rezultat i nadimak, pa biraš novi.</div><button class=alt onclick="menu()">ODUSTANI</button>`}
+function rs(m){try{localStorage.removeItem('pt');if(m==2)localStorage.removeItem('pn')}catch(e){}if(m==1){sync();menu()}else nick()}
 function l1(){stop();const W=360,H=480,L=5,LW=W/L,HY=H-56;
  app.innerHTML=`<div class=hud><span class=px>NIVO 1</span><span id=hh></span><span id=sc class=px></span></div><canvas id=cv width=${W} height=${H}></canvas><div class=box style="text-align:center">Uhvati dve cigle čiji je zbir polje C(n,k). Pomeraj: dodir/prevlačenje ili strelice.</div><div class=row><button class=alt onclick="menu()">MENI</button><button class=alt onclick="l1()">ODNOVA</button></div>`;
  const cv=$('#cv'),g=cv.getContext('2d'),rounds=[[3,1],[4,1],[4,2],[5,2],[6,3]];
@@ -163,7 +166,7 @@ function nick(){stop();let n='';try{n=localStorage.pn||''}catch(e){}
  app.innerHTML=`<h1 style="margin-top:40px">username?</h1><div class="box">Ukucaj nadimak (ne pravo ime). Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
  window.nk=()=>{const v=$('#ni').value.trim().slice(0,20);if(!v)return;try{localStorage.pn=v}catch(e){}window.FB&&FB.sync(v,get());menu()};
  $('#ni').onkeydown=e=>{if(e.key=='Enter')nk()}}
-function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+ function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
  app.innerHTML=`<canvas id="rain" style="position:fixed;inset:0;border:0"></canvas><div style="position:relative;margin:auto;text-align:center"><h1 id="tx" style="font-size:20px;min-height:32px;color:var(--wh)"></h1><div id="hh" style="font:28px 'Press Start 2P',monospace;color:var(--red);min-height:56px;margin-top:14px"></div><div id="tp" class="px" style="color:var(--st);margin-top:34px;visibility:hidden">KLIKNI ZA POČETAK</div><div class="px bl" style="position:fixed;left:0;right:0;bottom:calc(24px + env(safe-area-inset-bottom));text-align:center;color:var(--st);font-size:12px">b3thowen</div></div>`;
  const cv=$('#rain'),g=cv.getContext('2d'),fs=18;let w=cv.width=innerWidth,h=cv.height=innerHeight;
  const y=[...Array(Math.ceil(w/fs))].map(()=>-Math.random()*40|0),rc=()=>AB[Math.random()*AB.length|0];
