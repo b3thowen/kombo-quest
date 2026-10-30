@@ -181,7 +181,7 @@ const l4=()=>ambis(4,3,[['a','OBIČAN'],['s','SALTO'],['d','DUG']],12,[60,120],
  'a(3) = 2·a(2) + a(1) = 2·5 + 2 = 12');
 function nick(){stop();let n='';try{n=localStorage.pn||''}catch(e){}
  if(n){window.FB&&FB.sync(n,get());return menu()}
- app.innerHTML=`<h1 style="margin-top:40px">KAKO SE ZOVEŠ?</h1><div class="box">Ukucaj nadimak (ne pravo ime). Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
+ app.innerHTML=`<h1 style="margin-top:40px">Ime?</h1><div class="box">Ukucaj svoj username. Tvoj rezultat se pamti pod njim.</div><input id="ni" maxlength="20" autocomplete="off" placeholder="Nadimak" style="font:16px 'Press Start 2P',monospace;padding:14px;background:var(--ink);color:var(--wh);border:3px solid var(--slate);width:100%"><button onclick="nk()">KRENI</button><button class="alt" onclick="menu()">PRESKOČI</button>`;
  window.nk=()=>{const v=$('#ni').value.trim().slice(0,20);if(!v)return;try{localStorage.pn=v}catch(e){}window.FB&&FB.sync(v,get());menu()};
  $('#ni').onkeydown=e=>{if(e.key=='Enter')nk()}}
 function intro(){stop();const T='MADE BY SARA :)',AB='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
